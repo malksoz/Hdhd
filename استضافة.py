@@ -428,7 +428,8 @@ def handle_admin_panel(data, chat_id, msg_id, call):
     
     elif data == "admin_stats":
         total_files = len(get_all_files())
-        stats = f"📊 <b>إحصائيات النظام</b>\n\n• الملفات المرفوعة: {system_stats['total_files_uploaded']}\n• البوتات المشغلة حالياً: {len(running_processes)}\n• إجمالي الملفات: {total_files}"
+        folder_size = get_folder_size()
+        stats = f"📊 <b>إحصائيات النظام</b>\n\n• الملفات المرفوعة: {system_stats['total_files_uploaded']}\n• البوتات المشغلة: {len(running_processes)}\n• إجمالي الملفات: {total_files}\n• حجم المجلد: {folder_size} MB"
         bot.edit_message_text(stats, chat_id, msg_id, reply_markup=admin_panel())
     
     elif data == "admin_banned":
