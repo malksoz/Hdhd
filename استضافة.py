@@ -8,7 +8,7 @@ import json
 
 # ========== الإعدادات ==========
 TOKEN = "8862494857:AAHyYjVbSMQx8o3wBQp8FKvssH7A2OFf_aI"
-DEVELOPER_ID =8182446916
+DEVELOPER_ID = 8182446916
 DEVELOPER_USERNAME = "@HUIRDSU7"
 
 UPLOAD_FOLDER = "uploaded_bots"
@@ -21,7 +21,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
 
 # ========== المتغيرات ==========
-running_processes = {}  # filename -> process
+running_processes = {}
 banned_users = set()
 admins = set([DEVELOPER_ID])
 system_stats = {"total_bots_ran": 0, "total_files_uploaded": 0}
@@ -428,7 +428,7 @@ def handle_admin_panel(data, chat_id, msg_id, call):
     
     elif data == "admin_stats":
         total_files = len(get_all_files())
-        stats = f"📊 <b>إحصائيات النظام</b>\n\n• الملفات المرفوعة: {system_stats['total_files_uploaded']}\n• البوتات المشغلة حالياً: {len(running_processes)}\n• إجمالي مرات التشغيل: {system_stats['total_bots_ran']}\n• المستخدمين المحظورين: {len(banned_users)}\n• المساحة المستخدمة: {get_folder_size()} MB"
+        stats = f"📊 <b>إحصائيات النظام</b>\n\n• الملفات المرفوعة: {system_stats['total_files_uploaded']}\n• البوتات المشغلة حالياً: {len(running_processes)}\n• إجمالي الملفات: {total_files}"
         bot.edit_message_text(stats, chat_id, msg_id, reply_markup=admin_panel())
     
     elif data == "admin_banned":
