@@ -7,7 +7,7 @@ import shutil
 import json
 
 # ========== الإعدادات ==========
-TOKEN = "7680456789:AAFqL2tZ1mN0pQ9rStUvWxYzAbCdEfGhIj"
+TOKEN = "8576882573:AAGUUBT40VDPv1m0JONyOk-y1tDndcbJNvY"
 DEVELOPER_ID = 8182446916
 DEVELOPER_USERNAME = "@HUIRDSU7"
 
@@ -527,7 +527,7 @@ def handle_admin_panel(data, chat_id, msg_id, call):
         elif data == "admin_stats":
             total_files = len(get_all_files())
             folder_size = get_folder_size()
-            stats = f"📊 <b>إحصائيات النظام</b>\n\n• الملفات المرفوعة: {system_stats['total_files_uploaded']}\n• الب��تات المشغلة: {len(running_processes)}\n• إجمالي الملفات: {total_files}\n• حجم المجلد: {folder_size} MB"
+            stats = f"📊 <b>إحصائيات النظام</b>\n\n• الملفات المرفوعة: {system_stats['total_files_uploaded']}\n• البوتات المشغلة: {len(running_processes)}\n• إجمالي الملفات: {total_files}\n• حجم المجلد: {folder_size} MB"
             try:
                 bot.edit_message_text(stats, chat_id, msg_id, reply_markup=admin_panel())
             except:
