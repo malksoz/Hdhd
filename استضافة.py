@@ -7,7 +7,7 @@ import shutil
 import json
 
 # ========== الإعدادات ==========
-TOKEN = "8862494857:AAHyYjVbSMQx8o3wBQp8FKvssH7A2OFf_aI"
+TOKEN = "7680456789:AAFqL2tZ1mN0pQ9rStUvWxYzAbCdEfGhIj"
 DEVELOPER_ID = 8182446916
 DEVELOPER_USERNAME = "@HUIRDSU7"
 
@@ -18,7 +18,12 @@ STATS_FILE = "stats.json"
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
+try:
+    bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
+    print("✅ تم الاتصال بـ Telegram بنجاح!")
+except Exception as e:
+    print(f"❌ خطأ في الاتصال: {e}")
+    exit()
 
 # ========== المتغيرات ==========
 running_processes = {}
@@ -32,27 +37,34 @@ ITEMS_PER_PAGE = 5
 # ========== تحميل البيانات ==========
 def load_data():
     global banned_users, admins, system_stats, user_bots_count
-    if os.path.exists(BANNED_FILE):
-        with open(BANNED_FILE, "r") as f:
-            banned_users = set(int(line.strip()) for line in f if line.strip())
-    if os.path.exists(ADMINS_FILE):
-        with open(ADMINS_FILE, "r") as f:
-            admins = admins.union(int(line.strip()) for line in f if line.strip())
-    if os.path.exists(STATS_FILE):
-        with open(STATS_FILE, "r") as f:
-            data = json.load(f)
-            system_stats = data.get("stats", system_stats)
-            user_bots_count = data.get("users", {})
+    try:
+        if os.path.exists(BANNED_FILE):
+            with open(BANNED_FILE, "r") as f:
+                banned_users = set(int(line.strip()) for line in f if line.strip())
+        if os.path.exists(ADMINS_FILE):
+            with open(ADMINS_FILE, "r") as f:
+                admins = admins.union(int(line.strip()) for line in f if line.strip())
+        if os.path.exists(STATS_FILE):
+            with open(STATS_FILE, "r") as f:
+                data = json.load(f)
+                system_stats = data.get("stats", system_stats)
+                user_bots_count = data.get("users", {})
+        print("✅ تم تحميل البيانات بنجاح")
+    except Exception as e:
+        print(f"⚠️ خطأ في تحميل البيانات: {e}")
 
 def save_data():
-    with open(BANNED_FILE, "w") as f:
-        for uid in banned_users:
-            f.write(f"{uid}\n")
-    with open(ADMINS_FILE, "w") as f:
-        for aid in admins:
-            f.write(f"{aid}\n")
-    with open(STATS_FILE, "w") as f:
-        json.dump({"stats": system_stats, "users": user_bots_count}, f)
+    try:
+        with open(BANNED_FILE, "w") as f:
+            for uid in banned_users:
+                f.write(f"{uid}\n")
+        with open(ADMINS_FILE, "w") as f:
+            for aid in admins:
+                f.write(f"{aid}\n")
+        with open(STATS_FILE, "w") as f:
+            json.dump({"stats": system_stats, "users": user_bots_count}, f)
+    except Exception as e:
+        print(f"❌ خطأ في حفظ البيانات: {e}")
 
 load_data()
 
@@ -73,7 +85,10 @@ def show_files_for_deletion(chat_id, msg_id, page=0):
     files = get_all_files()
     
     if not files:
-        bot.edit_message_text("📂 لا توجد ملفات لحذفها.", chat_id, msg_id, reply_markup=main_menu())
+        try:
+            bot.edit_message_text("📂 لا توجد ملفات لحذفها.", chat_id, msg_id, reply_markup=main_menu())
+        except:
+            pass
         return
     
     total_pages = (len(files) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
@@ -85,7 +100,10 @@ def show_files_for_deletion(chat_id, msg_id, page=0):
     
     for f in current_files:
         status = "🟢" if f in running_processes else "🔴"
-        size = os.path.getsize(os.path.join(UPLOAD_FOLDER, f)) // 1024
+        try:
+            size = os.path.getsize(os.path.join(UPLOAD_FOLDER, f)) // 1024
+        except:
+            size = 0
         mar.add(types.InlineKeyboardButton(f"{status} {f} ({size}KB)", callback_data=f"del_file_{f}"))
     
     nav_buttons = []
@@ -99,17 +117,23 @@ def show_files_for_deletion(chat_id, msg_id, page=0):
     
     mar.add(types.InlineKeyboardButton("🔙 رجوع", callback_data="back"))
     
-    bot.edit_message_text(
-        f"🗑 <b>اختر الملف الذي تريد حذفه</b>\n\n"
-        f"📁 صفحة {page+1} من {total_pages}\n"
-        f"📊 إجمالي الملفات: {len(files)}",
-        chat_id, msg_id, reply_markup=mar
-    )
+    try:
+        bot.edit_message_text(
+            f"🗑 <b>اختر الملف الذي تريد حذفه</b>\n\n"
+            f"📁 صفحة {page+1} من {total_pages}\n"
+            f"📊 إجمالي الملفات: {len(files)}",
+            chat_id, msg_id, reply_markup=mar
+        )
+    except:
+        pass
 
 def confirm_delete(chat_id, msg_id, filename):
     path = os.path.join(UPLOAD_FOLDER, filename)
     if not os.path.exists(path):
-        bot.edit_message_text("❌ الملف غير موجود.", chat_id, msg_id, reply_markup=main_menu())
+        try:
+            bot.edit_message_text("❌ الملف غير موجود.", chat_id, msg_id, reply_markup=main_menu())
+        except:
+            pass
         return
     
     size = os.path.getsize(path) // 1024
@@ -121,14 +145,17 @@ def confirm_delete(chat_id, msg_id, filename):
         types.InlineKeyboardButton("❌ إلغاء", callback_data="back_to_delete")
     )
     
-    bot.edit_message_text(
-        f"⚠️ <b>تأكيد الحذف</b>\n\n"
-        f"📄 الملف: {filename}\n"
-        f"📦 الحجم: {size} KB\n"
-        f"📊 الحالة: {status}\n\n"
-        f"هل أنت متأكد من الحذف؟",
-        chat_id, msg_id, reply_markup=mar
-    )
+    try:
+        bot.edit_message_text(
+            f"⚠️ <b>تأكيد الحذف</b>\n\n"
+            f"📄 الملف: {filename}\n"
+            f"📦 الحجم: {size} KB\n"
+            f"📊 الحالة: {status}\n\n"
+            f"هل أنت متأكد من الحذف؟",
+            chat_id, msg_id, reply_markup=mar
+        )
+    except:
+        pass
 
 # ========== القوائم ==========
 def main_menu():
@@ -181,302 +208,408 @@ def admin_panel():
 # ========== بدء البوت ==========
 @bot.message_handler(commands=["start"])
 def start(message):
-    if is_banned(message.from_user.id):
-        bot.send_message(message.chat.id, "🚫 تم حظرك من استخدام هذا البوت.")
-        return
-    bot.send_message(
-        message.chat.id,
-        "👋 أهلاً بك في <b>مدير البوتات المتطور</b>!\n\n"
-        "🔽 استخدم الأزرار للتحكم:",
-        reply_markup=main_menu(),
-    )
+    try:
+        if is_banned(message.from_user.id):
+            bot.send_message(message.chat.id, "🚫 تم حظرك من استخدام هذا البوت.")
+            return
+        bot.send_message(
+            message.chat.id,
+            "👋 أهلاً بك في <b>مدير البوتات المتطور</b>!\n\n"
+            "🔽 استخدم الأزرار للتحكم:",
+            reply_markup=main_menu(),
+        )
+    except Exception as e:
+        print(f"❌ خطأ في أمر start: {e}")
 
 # ========== معالجة الأزرار ==========
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
-    if is_banned(call.from_user.id):
-        bot.answer_callback_query(call.id, "🚫 أنت محظور")
-        return
-    
-    data = call.data
-    chat_id = call.message.chat.id
-    msg_id = call.message.id
-
-    # ===== الأزرار العامة =====
-    if data == "upload":
-        bot.edit_message_text("📤 أرسل ملف Python (.py) لرفعه وتشغيله:", chat_id, msg_id)
-    
-    elif data == "delete_file":
-        show_files_for_deletion(chat_id, msg_id, 0)
-    
-    elif data == "install_lib":
-        bot.edit_message_text("📦 أرسل اسم المكتبة (مثال: requests):", chat_id, msg_id)
-        bot.register_next_step_handler(call.message, install_lib_step)
-    
-    elif data == "make_bot":
-        bot.edit_message_text("✏️ أرسل كود البوت كاملاً:", chat_id, msg_id)
-        bot.register_next_step_handler(call.message, make_bot_step)
-    
-    elif data == "stop_one":
-        bot.edit_message_text("⛔ أرسل اسم البوت الذي تريد إيقافه:", chat_id, msg_id)
-        bot.register_next_step_handler(call.message, stop_one_step)
-    
-    elif data == "start_one":
-        bot.edit_message_text("🟢 أرسل اسم البوت الذي تريد تشغيله:", chat_id, msg_id)
-        bot.register_next_step_handler(call.message, start_one_step)
-    
-    elif data == "list_files":
-        show_user_files(chat_id, msg_id)
-    
-    elif data == "my_stats":
-        count = user_bots_count.get(call.from_user.id, 0)
-        bot.edit_message_text(
-            f"📊 <b>إحصائياتك</b>\n\n"
-            f"• عدد البوتات التي قمت برفعها: {count}\n"
-            f"• عدد البوتات المشغلة حالياً: {len(running_processes)}",
-            chat_id, msg_id, reply_markup=main_menu()
-        )
-    
-    elif data == "dev":
-        bot.edit_message_text(
-            f"👨🏻‍💻 <b>مبرمج البوت</b>\n\n"
-            f"{DEVELOPER_USERNAME}\n"
-            f"ايدي المطور: {DEVELOPER_ID}",
-            chat_id, msg_id, reply_markup=main_menu()
-        )
-    
-    elif data == "admin_panel":
-        if not is_admin(call.from_user.id):
-            bot.answer_callback_query(call.id, "❌ هذا الأمر للمطورين فقط")
+    try:
+        if is_banned(call.from_user.id):
+            bot.answer_callback_query(call.id, "🚫 أنت محظور")
             return
-        bot.edit_message_text("🔐 <b>لوحة تحكم الأدمن</b>\n\nاختر إحدى الخيارات:", chat_id, msg_id, reply_markup=admin_panel())
-    
-    elif data == "back":
-        bot.edit_message_text("🔽 القائمة الرئيسية:", chat_id, msg_id, reply_markup=main_menu())
-    
-    # ===== أزرار الحذف =====
-    elif data.startswith("del_page_"):
-        page = int(data.split("_")[2])
-        show_files_for_deletion(chat_id, msg_id, page)
-    
-    elif data.startswith("del_file_"):
-        filename = data.replace("del_file_", "")
-        confirm_delete(chat_id, msg_id, filename)
-    
-    elif data.startswith("confirm_del_"):
-        filename = data.replace("confirm_del_", "")
-        path = os.path.join(UPLOAD_FOLDER, filename)
-        if os.path.exists(path):
-            if filename in running_processes:
+        
+        data = call.data
+        chat_id = call.message.chat.id
+        msg_id = call.message.id
+
+        # ===== الأزرار العامة =====
+        if data == "upload":
+            try:
+                bot.edit_message_text("📤 أرسل ملف Python (.py) لرفعه وتشغيله:", chat_id, msg_id)
+            except:
+                pass
+        
+        elif data == "delete_file":
+            show_files_for_deletion(chat_id, msg_id, 0)
+        
+        elif data == "install_lib":
+            try:
+                bot.edit_message_text("📦 أرسل اسم المكتبة (مثال: requests):", chat_id, msg_id)
+            except:
+                pass
+            bot.register_next_step_handler(call.message, install_lib_step)
+        
+        elif data == "make_bot":
+            try:
+                bot.edit_message_text("✏️ أرسل كود البوت كاملاً:", chat_id, msg_id)
+            except:
+                pass
+            bot.register_next_step_handler(call.message, make_bot_step)
+        
+        elif data == "stop_one":
+            try:
+                bot.edit_message_text("⛔ أرسل اسم البوت الذي تريد إيقافه:", chat_id, msg_id)
+            except:
+                pass
+            bot.register_next_step_handler(call.message, stop_one_step)
+        
+        elif data == "start_one":
+            try:
+                bot.edit_message_text("🟢 أرسل اسم البوت الذي تريد تشغيله:", chat_id, msg_id)
+            except:
+                pass
+            bot.register_next_step_handler(call.message, start_one_step)
+        
+        elif data == "list_files":
+            show_user_files(chat_id, msg_id)
+        
+        elif data == "my_stats":
+            count = user_bots_count.get(call.from_user.id, 0)
+            try:
+                bot.edit_message_text(
+                    f"📊 <b>إحصائياتك</b>\n\n"
+                    f"• عدد البوتات التي قمت برفعها: {count}\n"
+                    f"• عدد البوتات المشغلة حالياً: {len(running_processes)}",
+                    chat_id, msg_id, reply_markup=main_menu()
+                )
+            except:
+                pass
+        
+        elif data == "dev":
+            try:
+                bot.edit_message_text(
+                    f"👨🏻‍💻 <b>مبرمج البوت</b>\n\n"
+                    f"{DEVELOPER_USERNAME}\n"
+                    f"ايدي المطور: {DEVELOPER_ID}",
+                    chat_id, msg_id, reply_markup=main_menu()
+                )
+            except:
+                pass
+        
+        elif data == "admin_panel":
+            if not is_admin(call.from_user.id):
+                bot.answer_callback_query(call.id, "❌ هذا الأمر للمطورين فقط")
+                return
+            try:
+                bot.edit_message_text("🔐 <b>لوحة تحكم الأدمن</b>\n\nاختر إحدى الخيارات:", chat_id, msg_id, reply_markup=admin_panel())
+            except:
+                pass
+        
+        elif data == "back":
+            try:
+                bot.edit_message_text("🔽 القائمة الرئيسية:", chat_id, msg_id, reply_markup=main_menu())
+            except:
+                pass
+        
+        # ===== أزرار الحذف =====
+        elif data.startswith("del_page_"):
+            page = int(data.split("_")[2])
+            show_files_for_deletion(chat_id, msg_id, page)
+        
+        elif data.startswith("del_file_"):
+            filename = data.replace("del_file_", "")
+            confirm_delete(chat_id, msg_id, filename)
+        
+        elif data.startswith("confirm_del_"):
+            filename = data.replace("confirm_del_", "")
+            path = os.path.join(UPLOAD_FOLDER, filename)
+            if os.path.exists(path):
+                if filename in running_processes:
+                    try:
+                        running_processes[filename].terminate()
+                    except:
+                        pass
+                    del running_processes[filename]
+                os.remove(path)
                 try:
-                    running_processes[filename].terminate()
+                    bot.edit_message_text(f"✅ تم حذف الملف: {filename}", chat_id, msg_id, reply_markup=main_menu())
                 except:
                     pass
-                del running_processes[filename]
-            os.remove(path)
-            bot.edit_message_text(f"✅ تم حذف الملف: {filename}", chat_id, msg_id, reply_markup=main_menu())
-        else:
-            bot.edit_message_text("❌ الملف غير موجود.", chat_id, msg_id, reply_markup=main_menu())
-    
-    elif data == "back_to_delete":
-        show_files_for_deletion(chat_id, msg_id, 0)
-    
-    # ===== أزرار الأدمن =====
-    elif data.startswith("admin_"):
-        if not is_admin(call.from_user.id):
-            bot.answer_callback_query(call.id, "❌ غير مصرح")
-            return
-        handle_admin_panel(data, chat_id, msg_id, call)
+            else:
+                try:
+                    bot.edit_message_text("❌ الملف غير موجود.", chat_id, msg_id, reply_markup=main_menu())
+                except:
+                    pass
+        
+        elif data == "back_to_delete":
+            show_files_for_deletion(chat_id, msg_id, 0)
+        
+        # ===== أزرار الأدمن =====
+        elif data.startswith("admin_"):
+            if not is_admin(call.from_user.id):
+                bot.answer_callback_query(call.id, "❌ غير مصرح")
+                return
+            handle_admin_panel(data, chat_id, msg_id, call)
+    except Exception as e:
+        print(f"❌ خطأ في معالجة الأزرار: {e}")
 
 # ========== عرض الملفات ==========
 def show_user_files(chat_id, msg_id):
-    files = get_all_files()
-    if not files:
-        bot.edit_message_text("📂 لا توجد ملفات مرفوعة.", chat_id, msg_id, reply_markup=main_menu())
-        return
-    msg = "📋 <b>قائمة البوتات</b>\n\n"
-    for f in files:
-        status = "🟢 شغال" if f in running_processes else "🔴 متوقف"
-        size = os.path.getsize(os.path.join(UPLOAD_FOLDER, f)) // 1024
-        msg += f"• {f} ({size} KB) — {status}\n"
-    bot.edit_message_text(msg, chat_id, msg_id, reply_markup=main_menu())
+    try:
+        files = get_all_files()
+        if not files:
+            try:
+                bot.edit_message_text("📂 لا توجد ملفات مرفوعة.", chat_id, msg_id, reply_markup=main_menu())
+            except:
+                pass
+            return
+        msg = "📋 <b>قائمة البوتات</b>\n\n"
+        for f in files:
+            status = "🟢 شغال" if f in running_processes else "🔴 متوقف"
+            try:
+                size = os.path.getsize(os.path.join(UPLOAD_FOLDER, f)) // 1024
+            except:
+                size = 0
+            msg += f"• {f} ({size} KB) — {status}\n"
+        try:
+            bot.edit_message_text(msg, chat_id, msg_id, reply_markup=main_menu())
+        except:
+            pass
+    except Exception as e:
+        print(f"❌ خطأ في عرض الملفات: {e}")
 
 # ========== تشغيل ملف بايثون ==========
 def run_python_file(file_path, filename):
     try:
-        process = subprocess.Popen(["python3", file_path])
+        process = subprocess.Popen(["python3", file_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         running_processes[filename] = process
         return True
     except Exception as e:
+        print(f"❌ خطأ في تشغيل الملف: {e}")
         return False
 
 # ========== الأوامر ==========
 def install_lib_step(message):
-    lib = message.text.strip()
     try:
-        subprocess.check_call(["pip", "install", lib])
-        bot.reply_to(message, f"✅ تم تثبيت المكتبة: {lib}")
+        lib = message.text.strip()
+        try:
+            subprocess.check_call(["pip", "install", lib])
+            bot.reply_to(message, f"✅ تم تثبيت المكتبة: {lib}")
+        except Exception as e:
+            bot.reply_to(message, f"❌ فشل التثبيت: {e}")
     except Exception as e:
-        bot.reply_to(message, f"❌ فشل التثبيت: {e}")
+        print(f"❌ خطأ: {e}")
 
 def make_bot_step(message):
-    code = message.text
-    filename = f"userbot_{int(time.time())}.py"
-    path = os.path.join(UPLOAD_FOLDER, filename)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(code)
-    
-    success = run_python_file(path, filename)
-    if success:
-        user_bots_count[message.from_user.id] = user_bots_count.get(message.from_user.id, 0) + 1
-        system_stats["total_bots_ran"] += 1
-        save_data()
-        bot.reply_to(message, f"✅ تم إنشاء وتشغيل البوت: {filename}")
-    else:
-        bot.reply_to(message, f"❌ فشل تشغيل البوت: {filename}")
+    try:
+        code = message.text
+        filename = f"userbot_{int(time.time())}.py"
+        path = os.path.join(UPLOAD_FOLDER, filename)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(code)
+        
+        success = run_python_file(path, filename)
+        if success:
+            user_bots_count[message.from_user.id] = user_bots_count.get(message.from_user.id, 0) + 1
+            system_stats["total_bots_ran"] += 1
+            save_data()
+            bot.reply_to(message, f"✅ تم إنشاء وتشغيل البوت: {filename}")
+        else:
+            bot.reply_to(message, f"❌ فشل تشغيل البوت: {filename}")
+    except Exception as e:
+        print(f"❌ خطأ: {e}")
 
 def stop_one_step(message):
-    filename = message.text.strip()
-    if filename in running_processes:
-        try:
-            running_processes[filename].terminate()
-        except:
-            pass
-        del running_processes[filename]
-        bot.reply_to(message, f"⛔ تم إيقاف البوت: {filename}")
-    else:
-        bot.reply_to(message, "❌ البوت غير مشغل أو غير موجود.")
+    try:
+        filename = message.text.strip()
+        if filename in running_processes:
+            try:
+                running_processes[filename].terminate()
+            except:
+                pass
+            del running_processes[filename]
+            bot.reply_to(message, f"⛔ تم إيقاف البوت: {filename}")
+        else:
+            bot.reply_to(message, "❌ البوت غير مشغل أو غير موجود.")
+    except Exception as e:
+        print(f"❌ خطأ: {e}")
 
 def start_one_step(message):
-    filename = message.text.strip()
-    path = os.path.join(UPLOAD_FOLDER, filename)
-    if not os.path.exists(path):
-        bot.reply_to(message, "❌ الملف غير موجود.")
-        return
-    if filename in running_processes:
-        bot.reply_to(message, "⚠️ البوت يعمل بالفعل.")
-        return
-    success = run_python_file(path, filename)
-    if success:
-        bot.reply_to(message, f"🟢 تم تشغيل البوت: {filename}")
-    else:
-        bot.reply_to(message, f"❌ فشل تشغيل البوت: {filename}")
+    try:
+        filename = message.text.strip()
+        path = os.path.join(UPLOAD_FOLDER, filename)
+        if not os.path.exists(path):
+            bot.reply_to(message, "❌ الملف غير موجود.")
+            return
+        if filename in running_processes:
+            bot.reply_to(message, "⚠️ البوت يعمل بالفعل.")
+            return
+        success = run_python_file(path, filename)
+        if success:
+            bot.reply_to(message, f"🟢 تم تشغيل البوت: {filename}")
+        else:
+            bot.reply_to(message, f"❌ فشل تشغيل البوت: {filename}")
+    except Exception as e:
+        print(f"❌ خطأ: {e}")
 
 # ========== رفع الملفات ==========
 @bot.message_handler(content_types=["document"])
 def handle_document(message):
-    if is_banned(message.from_user.id):
-        return
-    
-    doc = message.document
-    if not doc.file_name.endswith(".py"):
-        bot.reply_to(message, "❌ يرجى رفع ملف Python فقط بامتداد .py")
-        return
-    
-    msg = bot.reply_to(message, "⏳ جاري رفع الملف...")
-    
-    file_path = os.path.join(UPLOAD_FOLDER, doc.file_name)
-    file_info = bot.get_file(doc.file_id)
-    downloaded = bot.download_file(file_info.file_path)
-    
-    with open(file_path, "wb") as f:
-        f.write(downloaded)
-    
-    # إيقاف النسخة القديمة إذا وجدت
-    if doc.file_name in running_processes:
-        try:
-            running_processes[doc.file_name].terminate()
-        except:
-            pass
-        del running_processes[doc.file_name]
-    
-    # تشغيل الملف الجديد
-    success = run_python_file(file_path, doc.file_name)
-    
-    if success:
-        user_bots_count[message.from_user.id] = user_bots_count.get(message.from_user.id, 0) + 1
-        system_stats["total_files_uploaded"] += 1
-        save_data()
-        bot.edit_message_text(f"✅ تم رفع وتشغيل البوت: {doc.file_name}", message.chat.id, msg.id)
-    else:
-        bot.edit_message_text(f"⚠️ تم رفع الملف لكن فشل التشغيل!", message.chat.id, msg.id)
-    
-    # إشعار للمطور
-    if message.from_user.id != DEVELOPER_ID:
-        try:
-            buttons = types.InlineKeyboardMarkup()
-            buttons.add(types.InlineKeyboardButton("🗑 حذف الملف", callback_data=f"dev_delete_{doc.file_name}_{message.from_user.id}"))
-            buttons.add(types.InlineKeyboardButton("🚫 حظر المستخدم", callback_data=f"dev_ban_{message.from_user.id}"))
-            
-            bot.send_message(
-                DEVELOPER_ID,
-                f"📤 <b>تم رفع ملف جديد!</b>\n\n"
-                f"• اسم الملف: {doc.file_name}\n"
-                f"• من: @{message.from_user.username or message.from_user.first_name}\n"
-                f"• ايدي: {message.from_user.id}",
-                reply_markup=buttons
-            )
-        except:
-            pass
+    try:
+        if is_banned(message.from_user.id):
+            return
+        
+        doc = message.document
+        if not doc.file_name.endswith(".py"):
+            bot.reply_to(message, "❌ يرجى رفع ملف Python فقط بامتداد .py")
+            return
+        
+        msg = bot.reply_to(message, "⏳ جاري رفع الملف...")
+        
+        file_path = os.path.join(UPLOAD_FOLDER, doc.file_name)
+        file_info = bot.get_file(doc.file_id)
+        downloaded = bot.download_file(file_info.file_path)
+        
+        with open(file_path, "wb") as f:
+            f.write(downloaded)
+        
+        # إيقاف النسخة القديمة إذا وجدت
+        if doc.file_name in running_processes:
+            try:
+                running_processes[doc.file_name].terminate()
+            except:
+                pass
+            del running_processes[doc.file_name]
+        
+        # تشغيل الملف الجديد
+        success = run_python_file(file_path, doc.file_name)
+        
+        if success:
+            user_bots_count[message.from_user.id] = user_bots_count.get(message.from_user.id, 0) + 1
+            system_stats["total_files_uploaded"] += 1
+            save_data()
+            bot.edit_message_text(f"✅ تم رفع وتشغيل البوت: {doc.file_name}", message.chat.id, msg.id)
+        else:
+            bot.edit_message_text(f"⚠️ تم رفع الملف لكن فشل التشغيل!", message.chat.id, msg.id)
+        
+        # إشعار للمطور
+        if message.from_user.id != DEVELOPER_ID:
+            try:
+                buttons = types.InlineKeyboardMarkup()
+                buttons.add(types.InlineKeyboardButton("🗑 حذف الملف", callback_data=f"dev_delete_{doc.file_name}_{message.from_user.id}"))
+                buttons.add(types.InlineKeyboardButton("🚫 حظر المستخدم", callback_data=f"dev_ban_{message.from_user.id}"))
+                
+                bot.send_message(
+                    DEVELOPER_ID,
+                    f"📤 <b>تم رفع ملف جديد!</b>\n\n"
+                    f"• اسم الملف: {doc.file_name}\n"
+                    f"• من: @{message.from_user.username or message.from_user.first_name}\n"
+                    f"• ايدي: {message.from_user.id}",
+                    reply_markup=buttons
+                )
+            except:
+                pass
+    except Exception as e:
+        print(f"❌ خطأ في رفع الملف: {e}")
 
 # ========== لوحة الأدمن ==========
 def handle_admin_panel(data, chat_id, msg_id, call):
-    if data == "admin_bots":
-        total = len(running_processes)
-        running_list = "\n".join(list(running_processes.keys())[:20]) if running_processes else "لا يوجد"
-        bot.edit_message_text(f"🤖 <b>البوتات المشغلة</b>\n\nالعدد: {total}\n\n{running_list}", chat_id, msg_id, reply_markup=admin_panel())
-    
-    elif data == "admin_stats":
-        total_files = len(get_all_files())
-        folder_size = get_folder_size()
-        stats = f"📊 <b>إحصائيات النظام</b>\n\n• الملفات المرفوعة: {system_stats['total_files_uploaded']}\n• البوتات المشغلة: {len(running_processes)}\n• إجمالي الملفات: {total_files}\n• حجم المجلد: {folder_size} MB"
-        bot.edit_message_text(stats, chat_id, msg_id, reply_markup=admin_panel())
-    
-    elif data == "admin_banned":
-        if banned_users:
-            banned_list = "\n".join(str(uid) for uid in list(banned_users)[:30])
-            bot.edit_message_text(f"🚫 <b>المستخدمين المحظورين</b>\n\n{banned_list}", chat_id, msg_id, reply_markup=admin_panel())
-        else:
-            bot.edit_message_text("✅ لا يوجد مستخدمين محظورين", chat_id, msg_id, reply_markup=admin_panel())
-    
-    elif data == "admin_clean":
-        cleaned = 0
-        for f in get_all_files():
-            fp = os.path.join(UPLOAD_FOLDER, f)
-            if os.path.getsize(fp) == 0:
-                os.remove(fp)
-                cleaned += 1
-        bot.edit_message_text(f"🗑 تم تنظيف {cleaned} ملف تالف", chat_id, msg_id, reply_markup=admin_panel())
-    
-    elif data == "admin_restart_all":
-        for proc in list(running_processes.values()):
+    try:
+        if data == "admin_bots":
+            total = len(running_processes)
+            running_list = "\n".join(list(running_processes.keys())[:20]) if running_processes else "لا يوجد"
             try:
-                proc.terminate()
+                bot.edit_message_text(f"🤖 <b>البوتات المشغلة</b>\n\nالعدد: {total}\n\n{running_list}", chat_id, msg_id, reply_markup=admin_panel())
             except:
                 pass
-        running_processes.clear()
-        bot.edit_message_text("🔄 تم إيقاف جميع البوتات", chat_id, msg_id, reply_markup=admin_panel())
-    
-    elif data == "admin_backup":
-        backup_name = f"backup_{int(time.time())}"
-        shutil.make_archive(backup_name, 'zip', UPLOAD_FOLDER)
-        bot.edit_message_text(f"💾 تم إنشاء النسخة: {backup_name}.zip", chat_id, msg_id, reply_markup=admin_panel())
-    
-    elif data == "admin_ban":
-        bot.edit_message_text("🚫 <b>حظر مستخدم</b>\nأرسل ايدي المستخدم:", chat_id, msg_id)
-        bot.register_next_step_handler(call.message, admin_ban_user)
-    
-    elif data == "admin_unban":
-        bot.edit_message_text("🔓 <b>إلغاء حظر مستخدم</b>\nأرسل ايدي المستخدم:", chat_id, msg_id)
-        bot.register_next_step_handler(call.message, admin_unban_user)
+        
+        elif data == "admin_stats":
+            total_files = len(get_all_files())
+            folder_size = get_folder_size()
+            stats = f"📊 <b>إحصائيات النظام</b>\n\n• الملفات المرفوعة: {system_stats['total_files_uploaded']}\n• الب��تات المشغلة: {len(running_processes)}\n• إجمالي الملفات: {total_files}\n• حجم المجلد: {folder_size} MB"
+            try:
+                bot.edit_message_text(stats, chat_id, msg_id, reply_markup=admin_panel())
+            except:
+                pass
+        
+        elif data == "admin_banned":
+            if banned_users:
+                banned_list = "\n".join(str(uid) for uid in list(banned_users)[:30])
+                try:
+                    bot.edit_message_text(f"🚫 <b>المستخدمين المحظورين</b>\n\n{banned_list}", chat_id, msg_id, reply_markup=admin_panel())
+                except:
+                    pass
+            else:
+                try:
+                    bot.edit_message_text("✅ لا يوجد مستخدمين محظورين", chat_id, msg_id, reply_markup=admin_panel())
+                except:
+                    pass
+        
+        elif data == "admin_clean":
+            cleaned = 0
+            for f in get_all_files():
+                fp = os.path.join(UPLOAD_FOLDER, f)
+                try:
+                    if os.path.getsize(fp) == 0:
+                        os.remove(fp)
+                        cleaned += 1
+                except:
+                    pass
+            try:
+                bot.edit_message_text(f"🗑 تم تنظيف {cleaned} ملف تالف", chat_id, msg_id, reply_markup=admin_panel())
+            except:
+                pass
+        
+        elif data == "admin_restart_all":
+            for proc in list(running_processes.values()):
+                try:
+                    proc.terminate()
+                except:
+                    pass
+            running_processes.clear()
+            try:
+                bot.edit_message_text("🔄 تم إيقاف جميع البوتات", chat_id, msg_id, reply_markup=admin_panel())
+            except:
+                pass
+        
+        elif data == "admin_backup":
+            backup_name = f"backup_{int(time.time())}"
+            try:
+                shutil.make_archive(backup_name, 'zip', UPLOAD_FOLDER)
+                bot.edit_message_text(f"💾 تم إنشاء النسخة: {backup_name}.zip", chat_id, msg_id, reply_markup=admin_panel())
+            except:
+                pass
+        
+        elif data == "admin_ban":
+            try:
+                bot.edit_message_text("🚫 <b>حظر مستخدم</b>\nأرسل ايدي المستخدم:", chat_id, msg_id)
+            except:
+                pass
+            bot.register_next_step_handler(call.message, admin_ban_user)
+        
+        elif data == "admin_unban":
+            try:
+                bot.edit_message_text("🔓 <b>إلغاء حظر مستخدم</b>\nأرسل ايدي المستخدم:", chat_id, msg_id)
+            except:
+                pass
+            bot.register_next_step_handler(call.message, admin_unban_user)
+    except Exception as e:
+        print(f"❌ خطأ في لوحة الأدمن: {e}")
 
 def get_folder_size():
     total = 0
-    if os.path.exists(UPLOAD_FOLDER):
-        for f in os.listdir(UPLOAD_FOLDER):
-            fp = os.path.join(UPLOAD_FOLDER, f)
-            if os.path.isfile(fp):
-                total += os.path.getsize(fp)
+    try:
+        if os.path.exists(UPLOAD_FOLDER):
+            for f in os.listdir(UPLOAD_FOLDER):
+                fp = os.path.join(UPLOAD_FOLDER, f)
+                if os.path.isfile(fp):
+                    try:
+                        total += os.path.getsize(fp)
+                    except:
+                        pass
+    except:
+        pass
     return round(total / (1024 * 1024), 2)
 
 def admin_ban_user(message):
@@ -503,44 +636,60 @@ def admin_unban_user(message):
 # ========== أزرار المطور ==========
 @bot.callback_query_handler(func=lambda call: call.data.startswith("dev_"))
 def dev_controls(call):
-    if call.from_user.id != DEVELOPER_ID:
-        bot.answer_callback_query(call.id, "❌ أنت لست المطور.")
-        return
-    
-    data = call.data
-    if data.startswith("dev_delete_"):
-        parts = data.split("_")
-        filename = parts[2]
-        user_id = int(parts[3])
-        path = os.path.join(UPLOAD_FOLDER, filename)
-        if os.path.exists(path):
-            if filename in running_processes:
+    try:
+        if call.from_user.id != DEVELOPER_ID:
+            bot.answer_callback_query(call.id, "❌ أنت لست المطور.")
+            return
+        
+        data = call.data
+        if data.startswith("dev_delete_"):
+            parts = data.split("_")
+            filename = parts[2]
+            user_id = int(parts[3])
+            path = os.path.join(UPLOAD_FOLDER, filename)
+            if os.path.exists(path):
+                if filename in running_processes:
+                    try:
+                        running_processes[filename].terminate()
+                    except:
+                        pass
+                    del running_processes[filename]
+                os.remove(path)
                 try:
-                    running_processes[filename].terminate()
+                    bot.edit_message_text(f"🗑 تم حذف الملف: {filename}", call.message.chat.id, call.message.id)
                 except:
                     pass
-                del running_processes[filename]
-            os.remove(path)
-            bot.edit_message_text(f"🗑 تم حذف الملف: {filename}", call.message.chat.id, call.message.id)
+                try:
+                    bot.send_message(user_id, f"❌ تم حذف ملفك: {filename} بواسطة المطور.")
+                except:
+                    pass
+            else:
+                bot.answer_callback_query(call.id, "❌ الملف غير موجود.")
+        
+        elif data.startswith("dev_ban_"):
+            user_id = int(data.split("_")[2])
+            banned_users.add(user_id)
+            save_data()
             try:
-                bot.send_message(user_id, f"❌ تم حذف ملفك: {filename} بواسطة المطور.")
+                bot.edit_message_text(f"🚫 تم حظر المستخدم: {user_id}", call.message.chat.id, call.message.id)
             except:
                 pass
-        else:
-            bot.answer_callback_query(call.id, "❌ الملف غير موجود.")
-    
-    elif data.startswith("dev_ban_"):
-        user_id = int(data.split("_")[2])
-        banned_users.add(user_id)
-        save_data()
-        bot.edit_message_text(f"🚫 تم حظر المستخدم: {user_id}", call.message.chat.id, call.message.id)
-        try:
-            bot.send_message(user_id, "❌ تم حظرك من البوت بواسطة المطور.")
-        except:
-            pass
+            try:
+                bot.send_message(user_id, "❌ تم حظرك من البوت بواسطة المطور.")
+            except:
+                pass
+    except Exception as e:
+        print(f"❌ خطأ في أزرار المطور: {e}")
 
 # ========== تشغيل البوت ==========
 print("🚀 البوت يعمل الآن...")
 print(f"📁 مجلد الرفع: {UPLOAD_FOLDER}")
 print(f"👑 المطور: {DEVELOPER_ID}")
-bot.infinity_polling()
+print("=" * 50)
+
+try:
+    bot.infinity_polling()
+except KeyboardInterrupt:
+    print("\n⛔ تم إيقاف البوت")
+except Exception as e:
+    print(f"❌ خطأ: {e}")
